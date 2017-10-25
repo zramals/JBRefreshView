@@ -1,5 +1,6 @@
 # JBRefreshView
 react-native ,pure JS code for refresh and load more.
+ps: if you want to use the 'normal' mode, you must edit ImageManager.js ,so that it can load your images in a right way.
 
 ###一、组件组成部分
 - JBRefreshConfig  (配置项)

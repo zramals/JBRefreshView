@@ -30,7 +30,7 @@ export default class JBRefreshBaseView extends Component {
 		topIndicatorHeight: config.topHeight,
 		bottomIndicatorHeight: config.bottomHeight,
 		duration: 300,
-		refreshType: 'normal',
+		refreshType: 'text',//'normal'没有需要到imagemanager设置图片
 		useLoadMore: false,
 		customView: null,
 		customBottomView: null,

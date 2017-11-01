@@ -26,8 +26,7 @@ export default {
 					pullingUri = 'prepare_loading00' + i;
 				}
 			}
-			let img = <Image source={{ uri: pullingUri }} key={i} style={{ width: 100, height: 10 }} resizeMode='contain' />;
-			pulling_imgs.push(img);
+			pulling_imgs.push(pullingUri);
 		}
 		return pulling_imgs;
 	},
@@ -45,8 +44,7 @@ export default {
 					loadingUri = 'loading00' + i;
 				}
 			}
-			let img = <Image source={{ uri: loadingUri }} key={i} style={{ width: 100, height: 10 }} resizeMode='contain' />;
-			loading_imgs.push(img);
+			loading_imgs.push(loadingUri);
 		}
 		return loading_imgs;
 	},

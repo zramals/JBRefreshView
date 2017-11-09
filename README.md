@@ -9,19 +9,25 @@ ps: if you want to use the 'normal' mode, you must edit ImageManager.js ,so that
 ###二、使用方式
 - 引入
 ```
-import { JBRefreshView ,JBRefreshConfig} from 'component'
+import JBRefreshView from './JBRefreshView'
 ```
 JBRefreshConfig可选，用来配置一些属性，默认来说，上下拉刷新组件都是统一制定好的，所以一般不用再去特殊配置。
 
 - ScrollView
 直接使用JBRefreshView替换scrollView
 ```
+onRefresh=(PullRefresh)=> {
+		//do something
+		setTimeout(() => {
+			this.refs['KEY_REFRESH'].refreshed();
+		}, 3000);
+	}
+
 <View style={[styles.container]}>
 <JBRefreshView
+ref={'KEY_REFRESH'}
 onRefresh={this.onRefresh}
 useLoadMore={false}
-refreshType='normal'
-styleType='light'
 >
 <View style={{ backgroundColor: '#eeeeee' }}>
 <Text>9</Text>
@@ -32,24 +38,97 @@ styleType='light'
 </View>
 ```
 - ListView
-重写listview的内部scrollview用JBRefreshView替代
+重写listview的内部scrollview用JBRefreshView替代,或者外面直接套用JBRefreshView都可以。
 ```
-<View style={styles.container}>
-<ListView
-renderScrollComponent={(props) =>
-<JBRefreshView
-onRefresh={(PullRefresh) => this.onRefresh(PullRefresh)}
-onLoadmore={(PullRefresh) => this.onLoadmore(PullRefresh)}
-useLoadMore={true}
-refreshType='normal'
-styleType='light'
-{...props}
-/>}
-dataSource={this.state.dataSource}
-renderSeparator={(sectionID, rowID) => <View key={`${sectionID}-${rowID}`} style={styles.separator} />}
-renderRow={(rowData) => <View style={styles.rowItem}><Text style={{ fontSize: 16 }}>{rowData}</Text></View>}
-/>
-</View>
+onRefresh(PullRefresh) {
+		console.log('refresh');
+
+		var self = this;
+		setTimeout(function () {
+			self.setState({
+				dataSource: self.state.dataSource.cloneWithRows(['我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell'])
+			});
+			PullRefresh.loaded();
+		}, 5000);
+
+}
+
+onLoadmore(PullRefresh) {
+		var self = this;
+		setTimeout(function () {
+
+			self.data = self.data.concat(['我是一个cell(新)']);
+			self.setState({
+				dataSource: self.state.dataSource.cloneWithRows(self.data)
+			});
+			PullRefresh.loaded();
+			//没有数据了，没有加载更多，则useLoadMore赋值为false
+		}, 5000);
+
+		console.log('onLoadMore');
+}
+render() {
+		return (
+			<View style={styles.container}>
+				<ListView
+				renderScrollComponent={(props) =>
+					<JBRefreshView
+						onRefresh={(PullRefresh) => this.onRefresh(PullRefresh)}
+						onLoadmore={(PullRefresh) => this.onLoadmore(PullRefresh)}
+						useLoadMore={true}
+					/>}
+				dataSource={this.state.dataSource}
+				renderSeparator={(sectionID, rowID) => <View key={`${sectionID}-${rowID}`} style={styles.separator} />}
+				renderRow={(rowData) => <View style={styles.rowItem}><Text style={{ fontSize: 16 }}>{rowData}</Text></View>}
+				/>
+			</View>
+)}
+```
+```
+onRefresh(PullRefresh) {
+		console.log('refresh');
+
+		var self = this;
+		setTimeout(function () {
+			self.setState({
+				dataSource: self.state.dataSource.cloneWithRows(['我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell'])
+			});
+			PullRefresh.loaded();
+		}, 5000);
+
+}
+
+onLoadmore(PullRefresh) {
+		var self = this;
+		setTimeout(function () {
+
+			self.data = self.data.concat(['我是一个cell(新)']);
+			self.setState({
+				dataSource: self.state.dataSource.cloneWithRows(self.data)
+			});
+			PullRefresh.loaded();
+			//没有数据了，没有加载更多，则useLoadMore赋值为false
+		}, 5000);
+
+		console.log('onLoadMore');
+}
+
+render() {
+		return (
+			<RefreshView
+					ref={KEY_REFRESH}
+					onRefresh={(PullRefresh) => this.onRefresh(PullRefresh)}
+					onLoadmore={(PullRefresh) => this.onLoadmore(PullRefresh)}
+					useLoadMore={this.state.loadmore}
+				>
+					<ListView
+						style={{ flex: 1 }}
+						dataSource={this.state.dataSource}
+						renderRow={this._renderRow}
+					/>
+					{this._generateEmptyView()}
+			</RefreshView>
+)}
 ```
 ###三、可用属性和方法
 - 属性
@@ -76,7 +155,7 @@ customBottomView: null,
 ```
 refreshed  ()    //刷新完成后调用
 loaded  ()      //加载更多完成后调用
-noMoreData  ()  //没有更多的时候调用
+弃用：noMoreData  ()  //没有更多的时候调用  (弃用，使用useLoadMore来做处理)
 ```
 
 ###四、遇到的问题
@@ -91,34 +170,12 @@ iOS的scrollView到到达顶部或者头部时，scrollView还可以继续拉动
 - RN的底层手势处理使用PanResponder，想要控制手势事件肯定绕不过他，但是官方文档对这部分的介绍十分匮乏。尤其是一些控制函数根本没有说明。
 
 总结如下：
+详见：
 ```
-this.panResponder = PanResponder.create({
-//这个视图是否在触摸开始时想成为响应器？
-onStartShouldSetPanResponder: this._onStartShouldSetPanResponder,
-//所以如果一个父视图要防止子视图在触摸开始时成为响应器，它应该有一个 onStartShouldSetResponderCapture 处理程序，返回 true。
-onStartShouldSetPanResponderCapture: this._onStartShouldSetPanResponderCapture,
-//当视图不是响应器时，该指令被在视图上移动的触摸调用：这个视图想“声明”触摸响应吗?
-onMoveShouldSetPanResponder: this._onMoveShouldSetPanResponder,
-//所以如果一个父视图要防止子视图在移动开始时成为响应器，它应该有一个 onMoveShouldSetPanResponderCapture 处理程序，返回 true。
-onMoveShouldSetPanResponderCapture: this._onMoveShouldSetPanResponderCapture,
-//当前有其他的东西成为响应器并且没有释放它。
-onResponderReject: this._onResponderReject,
-//视图现在正在响应触摸事件。这个时候要高亮标明并显示给用户正在发生的事情。
-onPanResponderGrant: this._onPanResponderGrant,
-//用户正移动他们的手指
-onPanResponderMove: this._onPanResponderMove,
-//在触摸最后被引发，即“touchUp”
-onPanResponderRelease: this._onPanResponderRelease,
-//onResponderTerminationRequest:其他的东西想成为响应器。这种视图应该释放应答吗？返回 true 就是允许释放
-//响应器已经从该视图抽离了。可能在调用onResponderTerminationRequest 之后被其他视图获取，也可能是被操作系统在没有请求的情况下获取了(发生在 iOS 的 control center/notification center)。
-onPanResponderTerminate: this._onPanResponderRelease,
-});
+http://blog.csdn.net/zramals/article/details/78403508
 ```
 
-其中：
-```
-onStartShouldSetPanResponderCapture
-onMoveShouldSetPanResponderCapture
-```
-在iOS端是可以阻止子view获取事件监听，安卓端无效。
-所以在第二版中使用这种方法来切换层级之间的事件响应，做好之后发现安卓不好使，导致浪费了时间和精力。
+有任何问题请留言，
+目前已知显示问题：
+1.外层有scrollView时，由于scrollView事件响应很霸道，不能被拒绝，所以在上下拉动刷新时，依然会触发外层scrollView的滑动，所以不建议外层有可以上下滑动的scrollView，左右滑动产生的效果个人感觉可以接受。
+2.由于scrollView的事件响应很霸道（跟上面怎么一样？），所以在scrollView滑动到顶部或底部的瞬间切换pan手势处理时，是会被scrollView拒绝掉的，所以显示效果上没有原生一滑到底的顺畅，需要再次拉动。

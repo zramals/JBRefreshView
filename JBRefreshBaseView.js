@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Text, PanResponder, Animated, Easing, Dimensions, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, Image, PanResponder, Animated, Easing, Dimensions, StyleSheet, ScrollView, Platform } from 'react-native';
 import PropTypes from 'prop-types'
 import imageViews from './ImageManager'
 import config from './JBRefreshConfig'
@@ -42,7 +42,7 @@ export default class JBRefreshBaseView extends Component {
 		//下拉刷新函数
 		onRefresh: PropTypes.func,
 		//上拉加载更多函数
-		onLoadmore: PropTypes.func,
+		onLoadMore: PropTypes.func,
 		//是否有loadmore
 		useLoadMore: PropTypes.bool.isRequired,
 		//自定义的上下拉刷新gif
@@ -62,7 +62,7 @@ export default class JBRefreshBaseView extends Component {
 		this.imageViewArray = this.props.pullImageView ? this.props.pullImageView : imageViews.pullImageView(this.props.styleType);
 		this.imageBottomViewArray = this.props.loadMoreView ? this.props.loadMoreView : imageViews.loadMoreView(this.props.styleType);
 		this.flag = defaultFlag;
-		this.useLoadMore = this.props.useLoadMore;
+		// this.useLoadMore = this.props.useLoadMore;
 
 		this.state = {
 			pullPan: new Animated.ValueXY(this.defaultXY),  //animatedView操作属性
@@ -124,9 +124,10 @@ export default class JBRefreshBaseView extends Component {
 	_onPanResponderStart = (e, gesture) => {
 	}
 	_onPanResponderEnd = (e, gesture) => {
+		this.setAndriodScrollable(true);
 	}
-
 	_onPanResponderReject = (e, gestureState) => {
+		this.setAndriodScrollable(true);
 	}
 	_onPanResponderTerminationRequest = (evt, gestureState) => {
 		if (this.isLoadState() || this.isPullState()) {
@@ -154,7 +155,7 @@ export default class JBRefreshBaseView extends Component {
 		this.lastY = this.state.pullPan.y._value;  //记录上次滑动位置
 
 		if (isUpGesture(gesture.dx, gesture.dy)) {   //上拉
-			if (this.useLoadMore && this.topOrBottomStatus == 'bottom') {  //当前已经在底部
+			if (this.props.useLoadMore && this.topOrBottomStatus == 'bottom') {  //当前已经在底部
 				this.setAndriodScrollable(false);
 				return true;
 			} else {   //不在底部
@@ -209,9 +210,9 @@ export default class JBRefreshBaseView extends Component {
 						}
 					}
 				}
-			} else {
-				//既没在底部，又可以滑动，且不在Loadrelease状态中（可以滑动状态，安卓无法调用到此）
-				this.scroll.scrollTo({ x: 0, y: gesture.dy * -1 });
+			// } else {
+			// 	//既没在底部，又可以滑动，且不在Loadrelease状态中（可以滑动状态，安卓无法调用到此）
+			// 	this.scroll.scrollTo({ x: 0, y: gesture.dy * -1 });
 			}
 		} else if (isDownGesture(gesture.dx, gesture.dy)) { //下拉
 			if (this.isLoadState()) {
@@ -239,9 +240,9 @@ export default class JBRefreshBaseView extends Component {
 						}
 					}
 				}
-			} else {
-				//没有到顶,scrollview仍可以滑动，
-				this.scroll.scrollTo({ x: 0, y: gesture.dy * -1 });
+			// } else {
+			// 	//没有到顶,scrollview仍可以滑动，
+			// 	this.scroll.scrollTo({ x: 0, y: gesture.dy * -1 });
 			}
 		}
 	}
@@ -274,8 +275,8 @@ export default class JBRefreshBaseView extends Component {
 				if (!this.timerBottomPic) {
 					this.timerBottomPic = setInterval(this._loopBottom.bind(this), config.loadingImageFrequence);
 				}
-				if (this.props.onLoadmore) {
-					this.props.onLoadmore(this);
+				if (this.props.onLoadMore) {
+					this.props.onLoadMore(this);
 				} else {
 					setTimeout(() => { this.resetPosition() }, 3000);
 				}
@@ -284,6 +285,7 @@ export default class JBRefreshBaseView extends Component {
 			this.loadingStatus();
 
 		}
+		this.setAndriodScrollable(true);
 	}
 	//scrollview滑动函数，enable状态和scrollto是会调用此方法
 	onScroll = (e) => {
@@ -292,11 +294,10 @@ export default class JBRefreshBaseView extends Component {
 		let scrollContentHeight = target.contentSize.height;
 		let scrollHeight = target.layoutMeasurement.height;
 		let mixOffset = scrollContentHeight - scrollHeight;
-
 		//当到达底部和顶部时，禁止scrollview继续滑动
 		if (offsetY <= (0 + config.blurSize)) {
 			this.topOrBottomStatus = 'top';
-		} else if (this.useLoadMore && offsetY >= (mixOffset - config.blurSize)) {
+		} else if (this.props.useLoadMore && offsetY >= (mixOffset - config.blurSize)) {
 			this.topOrBottomStatus = 'bottom';
 		}
 		else {
@@ -317,7 +318,7 @@ export default class JBRefreshBaseView extends Component {
 		if (offsetY <= 0) {
 			this.topOrBottomStatus = 'top';
 			this.scroll.scrollTo({ x: 0, y: 0, animated: false });
-		} else if (this.useLoadMore && offsetY >= mixOffset) {
+		} else if (this.props.useLoadMore && offsetY >= mixOffset) {
 			this.topOrBottomStatus = 'bottom';
 			this.scroll.scrollToEnd({ animated: false });
 		} else {
@@ -328,7 +329,8 @@ export default class JBRefreshBaseView extends Component {
 
 	setAndriodScrollable = (isEnable) => {
 		//安卓如果不设定scrollable为false，则下拉上下无法拉动
-		(Platform.OS != 'ios') && this.scroll.setNativeProps({ scrollEnabled: isEnable });
+		this.scroll.setNativeProps({ scrollEnabled: isEnable });
+		// (Platform.OS != 'ios') && this.scroll.setNativeProps({ scrollEnabled: isEnable });
 	}
 	//状态判断函数
 	isPullState = () => {
@@ -357,10 +359,10 @@ export default class JBRefreshBaseView extends Component {
 		this.topOrBottomStatus = 'content';
 		this.resolveHandler();
 	}
-	noMoreData = () => {
-		this.resolveHandler();
-		this.useLoadMore = false;
-	}
+	// noMoreData = () => {
+	// 	this.resolveHandler();
+	// 	this.useLoadMore = false;
+	// }
 
 	resolveHandler = () => {
 		// if (this.flag.pullrelease && this.flag.loadrelease) { //仅触摸松开时才触发
@@ -434,7 +436,6 @@ export default class JBRefreshBaseView extends Component {
 	}
 
 	renderNormalContent() {
-		console.log(this.state.imageIndex)
 		return (
 			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
 				{

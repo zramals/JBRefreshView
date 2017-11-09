@@ -17,117 +17,104 @@ JBRefreshConfig可选，用来配置一些属性，默认来说，上下拉刷�
 直接使用JBRefreshView替换scrollView
 ```
 onRefresh=(PullRefresh)=> {
-		//do something
-		setTimeout(() => {
-			this.refs['KEY_REFRESH'].refreshed();
-		}, 3000);
-	}
+	//do something
+	setTimeout(() => {
+		this.refs['KEY_REFRESH'].refreshed();
+	}, 3000);
+}
 
 <View style={[styles.container]}>
-<JBRefreshView
-ref={'KEY_REFRESH'}
-onRefresh={this.onRefresh}
-useLoadMore={false}
->
-<View style={{ backgroundColor: '#eeeeee' }}>
-<Text>9</Text>
-<Text>13</Text>
-<Text>14</Text>
-</View>
-</JBRefreshView>
+	<JBRefreshView
+		ref={'KEY_REFRESH'}
+		onRefresh={this.onRefresh}
+		useLoadMore={false}
+	>
+		<View style={{ backgroundColor: '#eeeeee' }}>
+			<Text>9</Text>
+			<Text>13</Text>
+			<Text>14</Text>
+		</View>
+	</JBRefreshView>
 </View>
 ```
 - ListView
 重写listview的内部scrollview用JBRefreshView替代,或者外面直接套用JBRefreshView都可以。
 ```
 onRefresh(PullRefresh) {
-		console.log('refresh');
-
-		var self = this;
-		setTimeout(function () {
-			self.setState({
-				dataSource: self.state.dataSource.cloneWithRows(['我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell'])
+	var self = this;
+	setTimeout(function () {
+	self.setState({
+		dataSource:self.state.dataSource.cloneWithRows(['我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell'])
 			});
-			PullRefresh.loaded();
-		}, 5000);
-
+		PullRefresh.loaded();
+	}, 5000);
 }
 
 onLoadmore(PullRefresh) {
-		var self = this;
-		setTimeout(function () {
-
-			self.data = self.data.concat(['我是一个cell(新)']);
-			self.setState({
-				dataSource: self.state.dataSource.cloneWithRows(self.data)
-			});
-			PullRefresh.loaded();
-			//没有数据了，没有加载更多，则useLoadMore赋值为false
-		}, 5000);
-
-		console.log('onLoadMore');
+	var self = this;
+	setTimeout(function () {
+		self.data = self.data.concat(['我是一个cell(新)']);
+		self.setState({
+			dataSource: self.state.dataSource.cloneWithRows(self.data)
+		});
+		PullRefresh.loaded();
+		//没有数据了，没有加载更多，则useLoadMore赋值为false
+	}, 5000);
 }
 render() {
-		return (
-			<View style={styles.container}>
-				<ListView
-				renderScrollComponent={(props) =>
-					<JBRefreshView
-						onRefresh={(PullRefresh) => this.onRefresh(PullRefresh)}
-						onLoadmore={(PullRefresh) => this.onLoadmore(PullRefresh)}
-						useLoadMore={true}
-					/>}
-				dataSource={this.state.dataSource}
-				renderSeparator={(sectionID, rowID) => <View key={`${sectionID}-${rowID}`} style={styles.separator} />}
-				renderRow={(rowData) => <View style={styles.rowItem}><Text style={{ fontSize: 16 }}>{rowData}</Text></View>}
-				/>
-			</View>
+	return (
+		<View style={styles.container}>
+			<ListView
+			renderScrollComponent={(props) =>
+				<JBRefreshView
+					onRefresh={(PullRefresh) => this.onRefresh(PullRefresh)}
+					onLoadmore={(PullRefresh) => this.onLoadmore(PullRefresh)}
+					useLoadMore={true}
+				/>}
+			dataSource={this.state.dataSource}
+			renderSeparator={(sectionID, rowID) => <View key={`${sectionID}-${rowID}`} style={styles.separator} />}
+			renderRow={(rowData) => <View style={styles.rowItem}><Text style={{ fontSize: 16 }}>{rowData}</Text></View>}
+			/>
+		</View>
 )}
 ```
 ```
 onRefresh(PullRefresh) {
-		console.log('refresh');
-
-		var self = this;
-		setTimeout(function () {
-			self.setState({
-				dataSource: self.state.dataSource.cloneWithRows(['我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell'])
-			});
-			PullRefresh.loaded();
-		}, 5000);
-
+	var self = this;
+	setTimeout(function () {
+		self.setState({
+			dataSource: self.state.dataSource.cloneWithRows(['我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell'])
+		});
+		PullRefresh.loaded();
+	}, 5000);
 }
 
 onLoadmore(PullRefresh) {
-		var self = this;
-		setTimeout(function () {
-
-			self.data = self.data.concat(['我是一个cell(新)']);
-			self.setState({
-				dataSource: self.state.dataSource.cloneWithRows(self.data)
-			});
-			PullRefresh.loaded();
-			//没有数据了，没有加载更多，则useLoadMore赋值为false
-		}, 5000);
-
-		console.log('onLoadMore');
+	var self = this;
+	setTimeout(function () {
+		self.data = self.data.concat(['我是一个cell(新)']);
+		self.setState({
+			dataSource: self.state.dataSource.cloneWithRows(self.data)
+		});
+		PullRefresh.loaded();
+		//没有数据了，没有加载更多，则useLoadMore赋值为false
+	}, 5000);
 }
 
 render() {
-		return (
-			<RefreshView
-					ref={KEY_REFRESH}
-					onRefresh={(PullRefresh) => this.onRefresh(PullRefresh)}
-					onLoadmore={(PullRefresh) => this.onLoadmore(PullRefresh)}
-					useLoadMore={this.state.loadmore}
-				>
-					<ListView
-						style={{ flex: 1 }}
-						dataSource={this.state.dataSource}
-						renderRow={this._renderRow}
-					/>
-					{this._generateEmptyView()}
-			</RefreshView>
+	return (
+		<RefreshView
+			ref={KEY_REFRESH}
+			onRefresh={(PullRefresh) => this.onRefresh(PullRefresh)}
+			onLoadmore={(PullRefresh) => this.onLoadmore(PullRefresh)}
+			useLoadMore={this.state.loadmore}
+		>
+			<ListView
+				style={{ flex: 1 }}
+				dataSource={this.state.dataSource}
+				renderRow={this._renderRow}
+			/>
+		</RefreshView>
 )}
 ```
 ###三、可用属性和方法
@@ -175,7 +162,9 @@ iOS的scrollView到到达顶部或者头部时，scrollView还可以继续拉动
 http://blog.csdn.net/zramals/article/details/78403508
 ```
 
-有任何问题请留言，
 目前已知显示问题：
-1.外层有scrollView时，由于scrollView事件响应很霸道，不能被拒绝，所以在上下拉动刷新时，依然会触发外层scrollView的滑动，所以不建议外层有可以上下滑动的scrollView，左右滑动产生的效果个人感觉可以接受。
-2.由于scrollView的事件响应很霸道（跟上面怎么一样？），所以在scrollView滑动到顶部或底部的瞬间切换pan手势处理时，是会被scrollView拒绝掉的，所以显示效果上没有原生一滑到底的顺畅，需要再次拉动。
+
+ - 外层有scrollView时，由于scrollView事件响应很霸道，不能被拒绝，所以在上下拉动刷新时，依然会触发外层scrollView的滑动，所以不建议外层有可以上下滑动的scrollView，左右滑动产生的效果个人感觉可以接受。
+ - 由于scrollView的事件响应很霸道（跟上面怎么一样？），所以在scrollView滑动到顶部或底部的瞬间切换pan手势处理时，是会被scrollView拒绝掉的，所以显示效果上没有原生一滑到底的顺畅，需要再次拉动。
+
+有任何问题请留言，

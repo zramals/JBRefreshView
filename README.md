@@ -38,7 +38,7 @@ onRefresh=(PullRefresh)=> {
 </View>
 ```
 - ListView
-重写listview的内部scrollview用JBRefreshView替代,或者外面直接套用JBRefreshView都可以。
+重写listview的内部scrollview用JBRefreshView替代,或者外面直接套用JBRefreshView都可以。以下提供两种方法实例，如无特殊情况，推荐使用外层套用JBRefreshView，并给JBRefreshView设定refs来使用其中的refreshed等方法。
 ```
 onRefresh(PullRefresh) {
 	var self = this;
@@ -46,7 +46,7 @@ onRefresh(PullRefresh) {
 	self.setState({
 		dataSource:self.state.dataSource.cloneWithRows(['我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell'])
 			});
-		PullRefresh.loaded();
+		PullRefresh.refreshed();
 	}, 5000);
 }
 
@@ -79,24 +79,26 @@ render() {
 )}
 ```
 ```
-onRefresh(PullRefresh) {
+onRefresh = () => {
 	var self = this;
 	setTimeout(function () {
 		self.setState({
 			dataSource: self.state.dataSource.cloneWithRows(['我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell', '我是一个cell'])
 		});
-		PullRefresh.loaded();
+        this.refs[KEY_REFRESH].refreshed();
+		//PullRefresh.refreshed();
 	}, 5000);
 }
 
-onLoadmore(PullRefresh) {
+onLoadmore = () => {
 	var self = this;
 	setTimeout(function () {
 		self.data = self.data.concat(['我是一个cell(新)']);
 		self.setState({
 			dataSource: self.state.dataSource.cloneWithRows(self.data)
 		});
-		PullRefresh.loaded();
+        this.refs[KEY_REFRESH].loaded();
+		//PullRefresh.loaded();
 		//没有数据了，没有加载更多，则useLoadMore赋值为false
 	}, 5000);
 }
@@ -105,8 +107,8 @@ render() {
 	return (
 		<RefreshView
 			ref={KEY_REFRESH}
-			onRefresh={(PullRefresh) => this.onRefresh(PullRefresh)}
-			onLoadmore={(PullRefresh) => this.onLoadmore(PullRefresh)}
+			onRefresh={this.onRefresh}
+			onLoadmore={this.onLoadmore}
 			useLoadMore={this.state.loadmore}
 		>
 			<ListView
@@ -166,5 +168,7 @@ http://blog.csdn.net/zramals/article/details/78403508
 
  - 外层有scrollView时，由于scrollView事件响应很霸道，不能被拒绝，所以在上下拉动刷新时，依然会触发外层scrollView的滑动，所以不建议外层有可以上下滑动的scrollView，左右滑动产生的效果个人感觉可以接受。
  - 由于scrollView的事件响应很霸道（跟上面怎么一样？），所以在scrollView滑动到顶部或底部的瞬间切换pan手势处理时，是会被scrollView拒绝掉的，所以显示效果上没有原生一滑到底的顺畅，需要再次拉动。
+ 
+ 2017-11-22添加解决方法：对于第一个问题，通过onStatusChange方法来判断当前的状态，来处理外部的可否滑动；对于第二个问题，为组件添加canCancelContentTouches字段来控制scrollView阻拦事件处理，安卓使用pan的blockNative判断，组件内已默认为true，canCancelContentTouches字段为ios使用，
 
 有任何问题请留言，

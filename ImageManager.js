@@ -15,38 +15,47 @@ export default {
 
 	pullImageView: function (styleType) {
 		//初始化加载所有图片
-		for (i = 1; i <= imagePullLength; i++) {
-			let pullingUri = ''
-			if (Platform.OS == 'ios') {
-				pullingUri = 'refresh_source/' + styleType + '/pulling/pulling_' + i + '.png';
-			} else {
-				if (i < 10) {
-					pullingUri = 'prepare_loading000' + i;
+		if (pulling_imgs.length > 0) {
+			return pulling_imgs;
+		} else {
+			for (i = 1; i <= imagePullLength; i++) {
+				let pullingUri = ''
+				if (Platform.OS == 'ios') {
+					pullingUri = 'refresh_source/' + styleType + '/pulling/pulling_' + i + '.png';
 				} else {
-					pullingUri = 'prepare_loading00' + i;
+					if (i < 10) {
+						pullingUri = 'prepare_loading000' + i;
+					} else {
+						pullingUri = 'prepare_loading00' + i;
+					}
 				}
+				pulling_imgs.push(pullingUri);
 			}
-			pulling_imgs.push(pullingUri);
+			return pulling_imgs;
 		}
-		return pulling_imgs;
+
 	},
 
 	loadMoreView: function (styleType) {
 		//初始化加载所有图片
-		for (i = 1; i <= imageLoadLength; i++) {
-			let loadingUri = '';
-			if (Platform.OS == 'ios') {
-				loadingUri = 'refresh_source/' + styleType + '/loading/loading_' + i + '.png';
-			} else {
-				if (i < 10) {
-					loadingUri = 'loading000' + i;
+		if (loading_imgs.length > 0) {
+			return loading_imgs;
+		} else {
+			for (i = 1; i <= imageLoadLength; i++) {
+				let loadingUri = '';
+				if (Platform.OS == 'ios') {
+					loadingUri = 'refresh_source/' + styleType + '/loading/loading_' + i + '.png';
 				} else {
-					loadingUri = 'loading00' + i;
+					if (i < 10) {
+						loadingUri = 'loading000' + i;
+					} else {
+						loadingUri = 'loading00' + i;
+					}
 				}
+				loading_imgs.push(loadingUri);
 			}
-			loading_imgs.push(loadingUri);
+			return loading_imgs;
 		}
-		return loading_imgs;
 	},
 
 }

@@ -29,6 +29,7 @@ export default class extends JBRefreshBaseView {
 				scrollEnabled={this.state.scrollEnabled}
 				onScroll={this.onScroll}
 				scrollEventThrottle={16}
+				canCancelContentTouches={this.props.canCancelContentTouches}
 				onScrollEndDrag={this.onScrollEndDrag}>
 				{this.props.children}
 			</ScrollView>

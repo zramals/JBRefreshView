@@ -210,9 +210,9 @@ export default class JBRefreshBaseView extends Component {
 						}
 					}
 				}
-			// } else {
-			// 	//既没在底部，又可以滑动，且不在Loadrelease状态中（可以滑动状态，安卓无法调用到此）
-			// 	this.scroll.scrollTo({ x: 0, y: gesture.dy * -1 });
+				// } else {
+				// 	//既没在底部，又可以滑动，且不在Loadrelease状态中（可以滑动状态，安卓无法调用到此）
+				// 	this.scroll.scrollTo({ x: 0, y: gesture.dy * -1 });
 			}
 		} else if (isDownGesture(gesture.dx, gesture.dy)) { //下拉
 			if (this.isLoadState()) {
@@ -240,9 +240,9 @@ export default class JBRefreshBaseView extends Component {
 						}
 					}
 				}
-			// } else {
-			// 	//没有到顶,scrollview仍可以滑动，
-			// 	this.scroll.scrollTo({ x: 0, y: gesture.dy * -1 });
+				// } else {
+				// 	//没有到顶,scrollview仍可以滑动，
+				// 	this.scroll.scrollTo({ x: 0, y: gesture.dy * -1 });
 			}
 		}
 	}
@@ -250,7 +250,7 @@ export default class JBRefreshBaseView extends Component {
 	_onPanResponderRelease = (e, gesture) => {
 		//根据flag状态进行相应的行为，上下拉未到位松开，则恢复默认位置，上下拉到位则调用回调方法，记录当前边界状态。
 		if (this.flag.pulling) { //没有下拉到位
-			this.resetPosition();//重置状态
+			this.resolveHandler();//重置状态
 		}
 		if (this.flag.pullok || this.flag.pullrelease) {
 			if (!this.flag.pullrelease) {  //第一次下拉到位，不在释放状态
@@ -267,7 +267,7 @@ export default class JBRefreshBaseView extends Component {
 			this.refreshingStatus();
 		}
 		if (this.flag.loading) {//没有上拉到位
-			this.resetPosition(); //重置状态
+			this.resolveHandler(); //重置状态
 		}
 		if (this.flag.loadok || this.flag.loadrelease) {//上拉到位
 
@@ -278,7 +278,7 @@ export default class JBRefreshBaseView extends Component {
 				if (this.props.onLoadMore) {
 					this.props.onLoadMore(this);
 				} else {
-					setTimeout(() => { this.resetPosition() }, 3000);
+					setTimeout(() => { this.resolveHandler() }, 3000);
 				}
 			}
 			this.setFlag(flagLoadrelease); //完成下拉，已松开
@@ -367,11 +367,12 @@ export default class JBRefreshBaseView extends Component {
 	resolveHandler = () => {
 		// if (this.flag.pullrelease && this.flag.loadrelease) { //仅触摸松开时才触发
 		this.resetPosition();
+		this.resetImageIndex();
 		// }
 	}
 	//恢复默认位置
 	resetPosition = () => {
-		this.flag = defaultFlag;
+		this.setFlag(defaultFlag); 
 		Animated.timing(this.state.pullPan, {
 			toValue: this.defaultXY,
 			easing: Easing.linear,
@@ -379,6 +380,43 @@ export default class JBRefreshBaseView extends Component {
 		}).start();
 		this.clearTimers();
 	}
+
+	resetImageIndex = () => {
+		//当前的index，根据duration恢复至0
+		if (this.state.imageIndex > 0) {
+			this.currentImageIndex = this.state.imageIndex;
+			let eachDuration = this.duration / this.state.imageIndex;
+
+			this.imageIndextimer = setInterval(() => {
+				this.currentImageIndex--;
+				if (this.currentImageIndex < 0) {
+					this.imageIndextimer && clearInterval(this.imageIndextimer);
+					this.imageIndextimer = null;
+				} else {
+					this.setState({
+						imageIndex: this.currentImageIndex,
+					})
+				}
+			}, eachDuration / 2);
+		}
+		if (this.state.imageBottomIndex > 0) {
+			this.currentBottomImageIndex = this.state.imageBottomIndex;
+			let eachDuration = this.duration / this.state.imageBottomIndex;
+
+			this.imageBottomIndextimer = setInterval(() => {
+				this.currentBottomImageIndex--;
+				if (this.currentBottomImageIndex < 0) {
+					this.imageBottomIndextimer && clearInterval(this.imageBottomIndextimer);
+					this.imageBottomIndextimer = null;
+				} else {
+					this.setState({
+						imageBottomIndex: this.currentBottomImageIndex,
+					})
+				}
+			}, eachDuration / 2);
+		}
+	}
+
 	//刷新状态
 	refreshingStatus = () => {
 		Animated.timing(this.state.pullPan, {

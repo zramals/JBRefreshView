@@ -262,7 +262,7 @@ export default class JBRefreshBaseView extends PureComponent {
 		}
 		if (this.flag.pullok || this.flag.pullrelease) {
 			if (!this.flag.pullrelease) {  //第一次下拉到位，不在释放状态
-				if (!this.timerPic) {
+				if (!this.timerPic && this.props.refreshType == 'normal') {
 					this.timerPic = setInterval(this._loop.bind(this), config.pullingImageFrequence);
 				}
 				if (this.props.onRefresh) {
@@ -280,7 +280,7 @@ export default class JBRefreshBaseView extends PureComponent {
 		if (this.flag.loadok || this.flag.loadrelease) {//上拉到位
 
 			if (!this.flag.loadrelease) {
-				if (!this.timerBottomPic) {
+				if (!this.timerBottomPic && this.props.refreshType == 'normal') {
 					this.timerBottomPic = setInterval(this._loopBottom.bind(this), config.loadingImageFrequence);
 				}
 				if (this.props.onLoadMore) {
@@ -375,7 +375,7 @@ export default class JBRefreshBaseView extends PureComponent {
 	resolveHandler = () => {
 		// if (this.flag.pullrelease && this.flag.loadrelease) { //仅触摸松开时才触发
 		this.resetPosition();
-		(this.props.refreshType=='normal') && this.resetImageIndex();
+		(this.props.refreshType == 'normal') && this.resetImageIndex();
 		// }
 	}
 	//恢复默认位置

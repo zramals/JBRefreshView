@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, PureComponent } from 'react';
 import { View, Text, Image, PanResponder, Animated, Easing, Dimensions, StyleSheet, ScrollView, Platform } from 'react-native';
 import PropTypes from 'prop-types'
 import imageViews from './ImageManager'
@@ -24,7 +24,7 @@ const isVerticalGesture = (x, y) => {
 	return (Math.abs(x) < Math.abs(y));
 };
 
-export default class JBRefreshBaseView extends Component {
+export default class JBRefreshBaseView extends PureComponent {
 	static defaultProps = {
 		onStatusChange: null,
 		topIndicatorHeight: config.topHeight,
@@ -63,16 +63,18 @@ export default class JBRefreshBaseView extends Component {
 		this.imageBottomViewArray = this.props.loadMoreView ? this.props.loadMoreView : imageViews.loadMoreView(this.props.styleType);
 		this.flag = defaultFlag;
 		// this.useLoadMore = this.props.useLoadMore;
+		//不使用state记录index并修改，解决卡顿问题
+		this.imageIndex = 0,  //当前显示图片的index
+			this.imageBottomIndex = 0, //bottom图面的index,图片可能不一样，需要分开处理
 
-		this.state = {
-			pullPan: new Animated.ValueXY(this.defaultXY),  //animatedView操作属性
-			scrollEnabled: true,   //使用this.isScrollable赋值，通过scrollenable来关闭响应
-			flag: defaultFlag,   //当前的上下拉刷新状态
-			height: 0,  //layout时使用，给view宽高赋值
-
-			imageIndex: 0,  //当前显示图片的index
-			imageBottomIndex: 0, //bottom图面的index,图片可能不一样，需要分开处理
-		};
+			this.state = {
+				pullPan: new Animated.ValueXY(this.defaultXY),  //animatedView操作属性
+				scrollEnabled: true,   //使用this.isScrollable赋值，通过scrollenable来关闭响应
+				flag: defaultFlag,   //当前的上下拉刷新状态
+				height: 0,  //layout时使用，给view宽高赋值
+				//imageIndex: 0,  //当前显示图片的index
+				//imageBottomIndex: 0, //bottom图面的index,图片可能不一样，需要分开处理
+			};
 		//手势滚动和松开后，记录当前是否在边界状态，若在top，则下拉时不会调用scrollTo方法，而直接使用pan
 		//若在bottom，则上拉使用pan而不是scrollto
 		this.topOrBottomStatus = 'top';
@@ -180,6 +182,7 @@ export default class JBRefreshBaseView extends Component {
 		//向上滑动，不是上拉状态时，进行pan操作，否则scrollto操作，scrollto中到达底部时，禁止滑动，改变为上拉状态，此时触发pan操作
 		//向下滑动，不是拉动状态时，进行pan的操作，否则scrollto操作，scroll到达顶部时，禁止滑动，触发pan操作，
 		//安卓不关闭scrollView事件无法进入。
+		let gestureDy = gesture.dy / 2;   //减速
 		if (isUpGesture(gesture.dx, gesture.dy)) { //向上滑动时
 			//如果不可滑动，或者在底部，或者在loadrelease中，则调用pan方法移动animatedView
 			if (this.isPullState()) {
@@ -188,17 +191,19 @@ export default class JBRefreshBaseView extends Component {
 			}
 			if (this.flag.loadrelease /*|| !this.isScrollable */ || this.topOrBottomStatus == 'bottom') {
 				//不可滑动，并且到达底部，直接移动view，并且处理相应状态
-				this.state.pullPan.setValue({ x: this.defaultXY.x, y: this.lastY + gesture.dy / 2 });
+				this.state.pullPan.setValue({ x: this.defaultXY.x, y: this.lastY + gestureDy });
 				//不在loadrelease中
 				if (!this.flag.loadrelease) {
-					//根据高度展示gif图
-					let absY = Math.abs(gesture.dy / 2);
-					let imageBottomIndex = Math.floor(absY / this.bottomIndicatorHeight * this.imageBottomViewArray.length);
-					imageBottomIndex = (imageBottomIndex > (this.imageBottomViewArray.length - 1)) ? this.imageBottomViewArray.length - 1 : imageBottomIndex;
-					this.setState({
-						imageBottomIndex: imageBottomIndex,
-					})
-					if ((gesture.dy / 2) > -this.bottomIndicatorHeight) { //正在上拉，没到位置
+					if (this.props.refreshType == 'normal' && (this.imageBottomViewArray.length > 0)) {
+						//根据高度展示gif图
+						let absY = Math.abs(gestureDy);
+						let imageBottomIndex = Math.floor(absY / this.bottomIndicatorHeight * this.imageBottomViewArray.length);
+						imageBottomIndex = (imageBottomIndex > (this.imageBottomViewArray.length - 1)) ? this.imageBottomViewArray.length - 1 : imageBottomIndex;
+						this.imageBottomIndex = imageBottomIndex;
+						//使用setnativeprops解决卡顿问题
+						this.setBottomImageIndex(imageBottomIndex);
+					}
+					if (gestureDy > -this.bottomIndicatorHeight) { //正在上拉，没到位置
 						if (!this.flag.loading) {
 							//调用回调方法
 							this.setFlag(flagLoading);
@@ -221,16 +226,19 @@ export default class JBRefreshBaseView extends Component {
 			}
 			if (this.flag.pullrelease /*|| !this.isScrollable */ || this.topOrBottomStatus == 'top') {
 				//到顶部之后还继续下拉，使用pan进行view的拉动
-				this.state.pullPan.setValue({ x: this.defaultXY.x, y: this.lastY + gesture.dy / 2 });  //gesture.dy/2 减速处理
+				this.state.pullPan.setValue({ x: this.defaultXY.x, y: this.lastY + gestureDy });  //gesture.dy/2 减速处理
 				//根据高度展示gif图
 				if (!this.flag.pullrelease) {
-					let absY = Math.abs(gesture.dy / 2)
-					let imageIndex = Math.floor(absY / this.topIndicatorHeight * this.imageViewArray.length);
-					imageIndex = (imageIndex > (this.imageViewArray.length - 1)) ? this.imageViewArray.length - 1 : imageIndex;
-					this.setState({
-						imageIndex: imageIndex,
-					})
-					if ((gesture.dy / 2) < this.topIndicatorHeight) { //正在下拉
+					if (this.props.refreshType == 'normal' && (this.imageViewArray.length > 0)) {
+						//根据高度展示gif图
+						let absY = Math.abs(gestureDy)
+						let imageIndex = Math.floor(absY / this.topIndicatorHeight * this.imageViewArray.length);
+						imageIndex = (imageIndex > (this.imageViewArray.length - 1)) ? this.imageViewArray.length - 1 : imageIndex;
+						//使用setnativeprops解决卡顿问题
+						this.imageIndex = imageIndex;
+						this.setImageIndex(imageIndex);
+					}
+					if (gestureDy < this.topIndicatorHeight) { //正在下拉
 						if (!this.flag.pulling) {
 							this.setFlag(flagPulling);
 						}
@@ -342,9 +350,9 @@ export default class JBRefreshBaseView extends Component {
 	setFlag = (flag) => {
 		if (this.flag != flag) {
 			this.flag = flag;
-			this.setState({
-				flag: this.flag,
-			})
+			if (this.props.refreshType == 'text') {
+				this.setState({ flag: this.flag, });
+			}
 			//通知当前状态
 			this.props.onStatusChange && this.props.onStatusChange(this.flag.status);
 		}
@@ -367,12 +375,12 @@ export default class JBRefreshBaseView extends Component {
 	resolveHandler = () => {
 		// if (this.flag.pullrelease && this.flag.loadrelease) { //仅触摸松开时才触发
 		this.resetPosition();
-		this.resetImageIndex();
+		(this.props.refreshType=='normal') && this.resetImageIndex();
 		// }
 	}
 	//恢复默认位置
 	resetPosition = () => {
-		this.setFlag(defaultFlag); 
+		this.setFlag(defaultFlag);
 		Animated.timing(this.state.pullPan, {
 			toValue: this.defaultXY,
 			easing: Easing.linear,
@@ -380,12 +388,31 @@ export default class JBRefreshBaseView extends Component {
 		}).start();
 		this.clearTimers();
 	}
+	setImageIndex = (index) => {
+		for (let i = 1; i < this.imageViewArray.length; i++) {
+			if (i == index) {
+				this.refs['topImage' + index].setNativeProps({ style: { opacity: 1 } });
+			} else {
+				this.refs['topImage' + i].setNativeProps({ style: { opacity: 0 } });
+			}
+		}
+	}
+	setBottomImageIndex = (index) => {
+		for (let i = 1; i < this.imageBottomViewArray.length; i++) {
+			if (i == index) {
+				this.refs['bottomImage' + index].setNativeProps({ style: { opacity: 1 } });
+			} else {
+				this.refs['bottomImage' + i].setNativeProps({ style: { opacity: 0 } });
+			}
+		}
+	}
 
 	resetImageIndex = () => {
 		//当前的index，根据duration恢复至0
-		if (this.state.imageIndex > 0) {
-			this.currentImageIndex = this.state.imageIndex;
-			let eachDuration = this.duration / this.state.imageIndex;
+		if (this.imageIndex > 0) {
+			this.currentImageIndex = this.imageIndex;
+			// let eachDuration = this.duration / this.state.imageIndex;
+			let eachDuration = 15;
 
 			this.imageIndextimer = setInterval(() => {
 				this.currentImageIndex--;
@@ -393,15 +420,14 @@ export default class JBRefreshBaseView extends Component {
 					this.imageIndextimer && clearInterval(this.imageIndextimer);
 					this.imageIndextimer = null;
 				} else {
-					this.setState({
-						imageIndex: this.currentImageIndex,
-					})
+					this.setImageIndex(this.currentImageIndex)
 				}
 			}, eachDuration / 2);
 		}
-		if (this.state.imageBottomIndex > 0) {
-			this.currentBottomImageIndex = this.state.imageBottomIndex;
-			let eachDuration = this.duration / this.state.imageBottomIndex;
+		if (this.imageBottomIndex > 0) {
+			this.currentBottomImageIndex = this.imageBottomIndex;
+			// let eachDuration = this.duration / this.imageBottomIndex;
+			let eachDuration = 15;
 
 			this.imageBottomIndextimer = setInterval(() => {
 				this.currentBottomImageIndex--;
@@ -409,9 +435,7 @@ export default class JBRefreshBaseView extends Component {
 					this.imageBottomIndextimer && clearInterval(this.imageBottomIndextimer);
 					this.imageBottomIndextimer = null;
 				} else {
-					this.setState({
-						imageBottomIndex: this.currentBottomImageIndex,
-					})
+					this.setImageIndex(this.currentBottomImageIndex)
 				}
 			}, eachDuration / 2);
 		}
@@ -445,21 +469,22 @@ export default class JBRefreshBaseView extends Component {
 	_loop() {
 		this.loopCount++;
 		if (this.loopCount < this.imageViewArray.length) {
-			this.setState({
-				imageIndex: this.loopCount,
-			});
+			this.imageIndex = this.loopCount;
+			this.setImageIndex(this.loopCount);
 		} else {
-			this.loopCount = -1;
+			this.loopCount = 0;
 		}
 	}
 	_loopBottom() {
 		this.loopBottomCount++;
 		if (this.loopBottomCount < this.imageBottomViewArray.length) {
-			this.setState({
-				imageBottomIndex: this.loopBottomCount,
-			});
+			this.imageBottomIndex = this.loopBottomCount;
+			this.setBottomImageIndex(this.loopBottomCount);
+			// this.setState({
+			// 	imageBottomIndex: this.loopBottomCount,
+			// });
 		} else {
-			this.loopBottomCount = -1;
+			this.loopBottomCount = 0;
 		}
 	}
 	//清除定时器
@@ -469,8 +494,8 @@ export default class JBRefreshBaseView extends Component {
 		this.timerBottomPic && clearInterval(this.timerBottomPic);
 		this.timerPic = null;
 		this.timerBottomPic = null;
-		this.loopCount = -1;
-		this.loopBottomCount = -1;
+		this.loopCount = 0;
+		this.loopBottomCount = 0;
 	}
 
 	renderNormalContent() {
@@ -481,9 +506,10 @@ export default class JBRefreshBaseView extends Component {
 						return (
 							<Image
 								source={{ uri: value }}
+								ref={'topImage' + index}
 								key={index}
 								style={{
-									opacity: this.state.imageIndex === index ? 1.0 : 0.0,
+									opacity: 0.0,
 									position: 'absolute',
 									width: 100,
 									height: 10
@@ -497,9 +523,9 @@ export default class JBRefreshBaseView extends Component {
 	}
 	rendeTextContent() {
 		let contents = [];
-		// let status = 'normal';
+
 		if (this.isPullState()) {
-			contents.push(<Text key={11}>{config.textConfig[this.state.flag.status]}</Text>);
+			contents.push(<Text key={'topText'}>{config.textConfig[this.state.flag.status]}</Text>);
 		}
 		return (contents);
 	}
@@ -516,7 +542,7 @@ export default class JBRefreshBaseView extends Component {
 								source={{ uri: value }}
 								key={index}
 								style={{
-									opacity: this.state.imageBottomIndex === index ? 1.0 : 0.0,
+									opacity: 0.0,
 									position: 'absolute',
 									width: 100,
 									height: 10
@@ -531,7 +557,7 @@ export default class JBRefreshBaseView extends Component {
 	rendeTextBottomContent() {
 		let contents = [];
 		if (this.isLoadState()) {
-			contents.push(<Text key={11}>{config.textConfig[this.state.flag.status]}</Text>);
+			contents.push(<Text key={'bottomText'}>{config.textConfig[this.state.flag.status]}</Text>);
 		}
 		return (contents);
 	}

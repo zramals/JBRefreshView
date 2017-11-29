@@ -59,22 +59,24 @@ export default class JBRefreshBaseView extends PureComponent {
 		this.defaultXY = { x: 0, y: this.topIndicatorHeight * -1 };  //animatedView默认位置
 
 		this.duration = this.props.duration;
-		this.imageViewArray = this.props.pullImageView ? this.props.pullImageView : imageViews.pullImageView(this.props.styleType);
-		this.imageBottomViewArray = this.props.loadMoreView ? this.props.loadMoreView : imageViews.loadMoreView(this.props.styleType);
+		if (this.props.refreshType == 'normal') {
+			this.imageViewArray = this.props.pullImageView ? this.props.pullImageView : imageViews.pullImageView(this.props.styleType);
+			this.imageBottomViewArray = this.props.loadMoreView ? this.props.loadMoreView : imageViews.loadMoreView(this.props.styleType);
+		}
 		this.flag = defaultFlag;
 		// this.useLoadMore = this.props.useLoadMore;
 		//不使用state记录index并修改，解决卡顿问题
-		this.imageIndex = 0,  //当前显示图片的index
-			this.imageBottomIndex = 0, //bottom图面的index,图片可能不一样，需要分开处理
+		this.imageIndex = 0;  //当前显示图片的index
+		this.imageBottomIndex = 0; //bottom图面的index,图片可能不一样，需要分开处理
 
-			this.state = {
-				pullPan: new Animated.ValueXY(this.defaultXY),  //animatedView操作属性
-				scrollEnabled: true,   //使用this.isScrollable赋值，通过scrollenable来关闭响应
-				flag: defaultFlag,   //当前的上下拉刷新状态
-				height: 0,  //layout时使用，给view宽高赋值
-				//imageIndex: 0,  //当前显示图片的index
-				//imageBottomIndex: 0, //bottom图面的index,图片可能不一样，需要分开处理
-			};
+		this.state = {
+			pullPan: new Animated.ValueXY(this.defaultXY),  //animatedView操作属性
+			scrollEnabled: true,   //使用this.isScrollable赋值，通过scrollenable来关闭响应
+			flag: defaultFlag,   //当前的上下拉刷新状态
+			height: 0,  //layout时使用，给view宽高赋值
+			//imageIndex: 0,  //当前显示图片的index
+			//imageBottomIndex: 0, //bottom图面的index,图片可能不一样，需要分开处理
+		};
 		//手势滚动和松开后，记录当前是否在边界状态，若在top，则下拉时不会调用scrollTo方法，而直接使用pan
 		//若在bottom，则上拉使用pan而不是scrollto
 		this.topOrBottomStatus = 'top';
@@ -384,7 +386,7 @@ export default class JBRefreshBaseView extends PureComponent {
 		Animated.timing(this.state.pullPan, {
 			toValue: this.defaultXY,
 			easing: Easing.linear,
-			duration: 300
+			duration: this.props.duration,
 		}).start();
 		this.clearTimers();
 	}
@@ -446,7 +448,7 @@ export default class JBRefreshBaseView extends PureComponent {
 		Animated.timing(this.state.pullPan, {
 			toValue: { x: 0, y: 0 },
 			easing: Easing.linear,
-			duration: 300
+			duration: this.props.duration
 		}).start();
 
 	}
@@ -455,7 +457,7 @@ export default class JBRefreshBaseView extends PureComponent {
 		Animated.timing(this.state.pullPan, {
 			toValue: { x: 0, y: -this.bottomIndicatorHeight - this.topIndicatorHeight },
 			easing: Easing.linear,
-			duration: 300
+			duration: this.props.duration
 		}).start();
 	}
 	onLayout = (e) => {
@@ -539,6 +541,7 @@ export default class JBRefreshBaseView extends PureComponent {
 					this.imageBottomViewArray.map((value, index) => {
 						return (
 							<Image
+								ref={'bottomImage' + index}
 								source={{ uri: value }}
 								key={index}
 								style={{

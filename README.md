@@ -1,14 +1,15 @@
 # JBRefreshView
 react-native纯js编写的上下拉刷新组件。
-默认使用'text'模式进行文字展示，如果想要使用自定义的gif图片，则需要自己编写ImageManager.js文件，绑定自己的图片，在选择'normal'来配置refreshType字段。
+
+如果想要使用自定义的gif图片，则需要自己编写ImageManager.js文件，绑定自己的图片。
 
 react-native ,pure JS code for refresh and load more.
-ps: if you want to use the 'normal' mode to show GIF images, you must edit ImageManager.js ,make sure it can load your images in a right way, and also to change the 'refreshType' form 'text' to 'normal'.
+ps: if you want to use your own images, you must edit ImageManager.js ,make sure it can load your images in a right way.
 
 ### 一、组件组成部分
 - JBRefreshConfig  (配置项)
 - JBRefreshView （组件）
-- ImageManager（内置的gif图图片管理器,我没有添加gif图在里面，想要使用gif的需要自己配置图片，定义成自己的路径即可）
+- ImageManager (图片工具类)
 
 ### 二、使用方式
 - 引入

@@ -1,4 +1,4 @@
-import React, { Component, PureComponent } from 'react';
+import React, { Component } from 'react';
 import { View, Text, Image, PanResponder, Animated, Easing, Dimensions, StyleSheet, ScrollView, Platform } from 'react-native';
 import PropTypes from 'prop-types'
 import imageViews from './ImageManager'
@@ -24,13 +24,13 @@ const isVerticalGesture = (x, y) => {
 	return (Math.abs(x) < Math.abs(y));
 };
 
-export default class JBRefreshBaseView extends PureComponent {
+export default class JBRefreshBaseView extends Component {
 	static defaultProps = {
 		onStatusChange: null,
 		topIndicatorHeight: config.topHeight,
 		bottomIndicatorHeight: config.bottomHeight,
 		duration: 300,
-		refreshType: 'text',
+		refreshType: 'normal',
 		useLoadMore: false,
 		customView: null,
 		customBottomView: null,
@@ -66,7 +66,7 @@ export default class JBRefreshBaseView extends PureComponent {
 		this.flag = defaultFlag;
 		// this.useLoadMore = this.props.useLoadMore;
 		//不使用state记录index并修改，解决卡顿问题
-		this.imageIndex = 0;  //当前显示图片的index
+		this.imageIndex = 0; //当前显示图片的index
 		this.imageBottomIndex = 0; //bottom图面的index,图片可能不一样，需要分开处理
 
 		this.state = {
@@ -391,22 +391,28 @@ export default class JBRefreshBaseView extends PureComponent {
 		this.clearTimers();
 	}
 	setImageIndex = (index) => {
-		for (let i = 1; i < this.imageViewArray.length; i++) {
-			if (i == index) {
-				this.refs['topImage' + index].setNativeProps({ style: { opacity: 1 } });
-			} else {
-				this.refs['topImage' + i].setNativeProps({ style: { opacity: 0 } });
+		if (this.refs['topImage' + index]) {
+			for (let i = 1; i < this.imageViewArray.length; i++) {
+				if (i == index) {
+					this.refs['topImage' + index].setNativeProps({ style: { opacity: 1 } });
+				} else {
+					this.refs['topImage' + i].setNativeProps({ style: { opacity: 0 } });
+				}
 			}
 		}
+
 	}
 	setBottomImageIndex = (index) => {
-		for (let i = 1; i < this.imageBottomViewArray.length; i++) {
-			if (i == index) {
-				this.refs['bottomImage' + index].setNativeProps({ style: { opacity: 1 } });
-			} else {
-				this.refs['bottomImage' + i].setNativeProps({ style: { opacity: 0 } });
+		if (this.refs['bottomImage' + index]) {
+			for (let i = 1; i < this.imageBottomViewArray.length; i++) {
+				if (i == index) {
+					this.refs['bottomImage' + index].setNativeProps({ style: { opacity: 1 } });
+				} else {
+					this.refs['bottomImage' + i].setNativeProps({ style: { opacity: 0 } });
+				}
 			}
 		}
+
 	}
 
 	resetImageIndex = () => {
@@ -501,13 +507,14 @@ export default class JBRefreshBaseView extends PureComponent {
 	}
 
 	renderNormalContent() {
+		// let type = this.props.styleType + '_pulling';
 		return (
 			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
 				{
 					this.imageViewArray.map((value, index) => {
 						return (
 							<Image
-								source={{ uri: value }}
+								source={value}
 								ref={'topImage' + index}
 								key={index}
 								style={{
@@ -535,14 +542,15 @@ export default class JBRefreshBaseView extends PureComponent {
 		return this.props.customView;
 	}
 	renderBottomContent() {
+		// let type = this.props.styleType + '_loading';
 		return (
 			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
 				{
 					this.imageBottomViewArray.map((value, index) => {
 						return (
 							<Image
+								source={value}
 								ref={'bottomImage' + index}
-								source={{ uri: value }}
 								key={index}
 								style={{
 									opacity: 0.0,

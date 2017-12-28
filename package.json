@@ -1,0 +1,25 @@
+{
+  "name": "react-native-jbrefreshview",
+  "version": "1.1.4",
+  "description": "react-native ,pure JS code for refresh and load more.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zramals/JBRefreshView.git"
+  },
+  "keywords": [
+    "refresh",
+    "react-native",
+    "load",
+    "pull"
+  ],
+  "author": "zramals",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zramals/JBRefreshView/issues"
+  },
+  "homepage": "https://github.com/zramals/JBRefreshView#readme"
+}

@@ -1,5 +1,8 @@
 # JBRefreshView
 react-native纯js编写的上下拉刷新组件。
+注意：
+npm安装请使用，npm i react-native-refresh-view-pure
+react-native-jbrefreshview已不在维护。
 
 如果想要使用自定义的gif图片，则需要自己编写ImageManager.js文件，绑定自己的图片。
 
